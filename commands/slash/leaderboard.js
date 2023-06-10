@@ -1,12 +1,22 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ButtonStyle } = require('discord.js')
 
 const { leaderBoard } = require("../../utils/connect")
 const { claimToken, userInfo } = require("../../utils/connect")
 // const { memberTransaction } = require("../../server.js")
+const { format } = require("../../utils/functions")
 const fs = require("fs")
 
 const moment = require("moment")
 const token = "<:dwood:1055600798756777984>"
+const downpage = "https://cdn.discordapp.com/attachments/1034106468800135168/1041668169426817044/downpage_1.png"
+
+const Pagination = require('customizable-discordjs-pagination');
+const buttons = [
+  { label: 'First', emoji: ':first:1090380307473121330', style: ButtonStyle.Secondary },
+  { label: '\u200b', emoji: ':previous:1090380312174923896', style: ButtonStyle.Danger },
+  { label: '\u200b', emoji: ':next:1090380310841139333', style: ButtonStyle.Success },
+  { label: 'Last', emoji: ':last:1090380308920160336', style: ButtonStyle.Secondary },
+]
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -21,49 +31,61 @@ module.exports = {
         .setDescription('The max amount to finish counting the leaderboard')
               .setRequired(false)),
     run: async ({ client, interaction }) => {
-      await interaction.deferReply({ ephemeral: true })
+      await interaction.deferReply()
 
       const channel_id = await interaction.channel.id
       const channel = await interaction.guild.channels.cache.get(`${channel_id}`)
       const min = !interaction.options._hoistedOptions[0] ? 0 : interaction.options._hoistedOptions[0].value
       const max = !interaction.options._hoistedOptions[1] ? 21_000_000 : interaction.options._hoistedOptions[1].value
-      
-      await leaderBoard().then(async r => {
-        if(r.error !== null){
-         return interaction.editReply({ content: "Something went wrong, fetching de data..." })
+
+    const resp = await leaderBoard()
+    if (resp.error !== null) {
+      return interaction.editReply({ content: "Something went wrong, fetching de data..." })
+    }
+
+    const LBoard = await resp.leaderboard.filter(i => i.balance > min && i.balance < max)
+    LBoard.sort((a, b) => b.balance - a.balance);
+    let userList = []
+
+    const allUsers = LBoard.length
+
+    LBoard.forEach((r, index) => {
+      const user_id = r.discord_id
+      const balance = r.balance
+      if(!user_id) return
+      userList.push({ name: `📑 • ${index + 1}`, value: `<@${user_id}>\n> Balance: **${format(balance)}**`, inline: true })
+      return
+    })
+
+    const usersPerPart = 10;
+    const listEmbeds = []
+    for (let i = 0; i < userList.length; i += usersPerPart) {
+      const parts = userList.slice(i, i + usersPerPart)
+      //const part = parts.join('')
+      const result = parts.reduce((acc, cur, index) => {
+        if (index % 2 !== 0 && index !== 0) {
+          acc.push({ name: '\u200B', value: '\u200B', inline: true });
         }
-        
-        const leaderBoard = await r.leaderboard.filter(i => i.balance > min && i.balance < max)
-        // const users = await leaderBoard.map(i => i.discord_id)
-        // await users.forEach(e => {
-        //   if (e === null) return
-        //   return console.log("<@" + e + ">")
-        // })
-        // await leaderBoard.forEach(async e => {
-        //   if(e.discord_id === null || e.discord_id === "726520866493693984" || e.discord_id === "883046016406945852") return console.log(e.discord_id)
-        //   const resta = e.balance - 5000
-        //   const wallet = e.public_key
-        //   await claimToken(wallet, resta, 'WOOD PURGE').then(r => {
-        //     return console.log("Done")
-        //   })
-          
-        // })
-        // return        
-        const allUsers = leaderBoard.length
-        const list = JSON.stringify(leaderBoard, null, 4)
-        const file = fs.writeFileSync('./leaderboard.csv', list)
-        const attachment = new AttachmentBuilder(
-          './leaderboard.csv', 
-          { 
-            name: 'leaderboard.csv' 
-          }
-        )
-        const infoEmbed = new EmbedBuilder()
+        acc.push(cur);
+        return acc;
+      }, []);
+      const embed = new EmbedBuilder()
         .setColor(0xBFF5A1)
-        .setTitle(`There are ${allUsers} in the range amount you requested.`)
-        await channel.send({ embeds: [infoEmbed], files: [attachment], ephemeral: false })
-        await interaction.deleteReply()
-        fs.unlinkSync('./leaderboard.csv')
-      })
-    },
+        //.setAuthor({ name: `There are ${allUsers} in the range amount you requested.` })
+        .setTitle('⸺ LEADERBOARD')
+        .setImage(downpage)
+        .addFields(result)
+
+      listEmbeds.push(embed);
+    }
+    const extraText = `There are ${allUsers} in the range amount you requested.`
+    new Pagination()
+      .setCommand(interaction)
+      .setPages(listEmbeds)
+      .setButtons(buttons)
+      .setPaginationCollector({ timeout: 120_000 })
+      .setSelectMenu({ enable: false })
+      .setFooter({ enableIconUrl: false, extraText: extraText })
+      .send();
+  },
 };

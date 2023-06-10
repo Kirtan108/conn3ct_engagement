@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ButtonStyle } = require('discord.js')
 
 const { userInfo } = require("../../utils/connect")
 const { format } = require("../../utils/functions")
@@ -7,6 +7,14 @@ const fs = require("fs")
 
 const moment = require("moment")
 const token = "<:dwood:1055600798756777984>"
+
+const Pagination = require('customizable-discordjs-pagination');
+const buttons = [
+  { label: 'First', emoji: ':first:1090380307473121330', style: ButtonStyle.Secondary },
+  { label: '\u200b', emoji: ':previous:1090380312174923896', style: ButtonStyle.Danger },
+  { label: '\u200b', emoji: ':next:1090380310841139333', style: ButtonStyle.Success },
+  { label: 'Last', emoji: ':last:1090380308920160336', style: ButtonStyle.Secondary },
+]
 
 module.exports = {
     data: new SlashCommandBuilder()
