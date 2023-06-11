@@ -1,12 +1,22 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder } = require('discord.js')
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ButtonStyle } = require('discord.js')
 
 const { userInfo } = require("../../utils/connect")
-const { format, getNFTWallet } = require("../../utils/functions")
+const { format } = require("../../utils/functions")
 // const { memberTransaction } = require("../../server.js")
 const fs = require("fs")
+const { resolveToWalletAddress, getParsedNftAccountsByOwner } = require("@nfteyez/sol-rayz")
+const fetch = require("node-fetch")
 
 const token = "<:dwood:1055600798756777984>"
 const downpage = "https://cdn.discordapp.com/attachments/1034106468800135168/1041668169426817044/downpage_1.png"
+
+const Pagination = require('customizable-discordjs-pagination');
+const buttons = [
+  { label: 'First', emoji: ':first:1090380307473121330', style: ButtonStyle.Secondary },
+  { label: '\u200b', emoji: ':previous:1090380312174923896', style: ButtonStyle.Danger },
+  { label: '\u200b', emoji: ':next:1090380310841139333', style: ButtonStyle.Success },
+  { label: 'Last', emoji: ':last:1090380308920160336', style: ButtonStyle.Secondary },
+]
 
 module.exports = {
   data: new ContextMenuCommandBuilder()
@@ -14,7 +24,7 @@ module.exports = {
 	.setType(ApplicationCommandType.User),
     run: async ({ client, interaction }) => {
       //console.log(interaction.options/*._hoistedOptions*/)
-      await interaction.deferReply({ ephemeral: true })
+      await interaction.deferReply({ ephemeral: false })
       const member = interaction.targetUser.id
       const mention = interaction.targetUser
 
@@ -27,74 +37,50 @@ module.exports = {
          .setTimestamp()
          .setFooter({ text: "ConnectApp - Powered by Mindfolk", iconURL: "https://media.discordapp.net/attachments/1048740961561366589/1055593587741564988/logoapp.png" })
         
-        if(r === undefined) return interaction.editReply({ embeds:[errorEmbed], ephemeral: true })
-        if(r.error !== null){
-         return interaction.editReply({ embeds:[errorEmbed], ephemeral: false })
-        }
-        const discord = r.user.discord === null ? "Not Connected 🔴" : "Connected 🟢"
-        const twitter = r.user.twitter === null ? "Not Connected 🔴" : "Connected 🟢"
+        if(!r || r.error !== null) return interaction.editReply({ embeds:[errorEmbed], ephemeral: true })
         const b = "```"
 
-        const chopList = r.user.chop_list === true ? "Approved" : "Pending"
-        const whiteList = r.user.approved === true ? "Approved" : "Pending"
         const wallet = r.user.public_key
 
-        const collectionNFT = await getNFTWallet(wallet)
-        const counts = {};
-        await collectionNFT.forEach(function (x) { 
-          const collection = x.collectionTitle
-          if (collection === undefined) return
-          counts[collection] = (counts[collection] || 0) + 1; 
-        });
+        const publicAddress = await resolveToWalletAddress({ text: wallet });
+        const nftArray = await getParsedNftAccountsByOwner({ publicAddress });
 
-        const NFTS = new EmbedBuilder().setColor(0xBFF5A1)
-        .setTitle(`⸺ NFTS | ${mention.username}#${mention.discriminator}`).setImage(`${downpage}`)
-        const NFTS2 = new EmbedBuilder().setColor(0xBFF5A1).setImage(`${downpage}`)
-        const NFTS3 = new EmbedBuilder().setColor(0xBFF5A1).setImage(`${downpage}`)
-        const NFTS4 = new EmbedBuilder().setColor(0xBFF5A1).setImage(`${downpage}`)
-        
-        let fields = []
-        Object.keys(counts).forEach(key => {
-          const collection = `${key}`
-          const amount = `${counts[key]}`
-          const format = { name: `•  ${collection}`, value: `> ${amount}`, inline: true}
-          fields.push(format)
-          return
-        })
-        const size = Object.keys(fields).length
-        if(size <= 25) {
-            NFTS.addFields(fields)
-            return interaction.editReply({ embeds: [NFTS], ephemeral: false })
-        }
-        if(size > 25 && size <= 50) {
-            const group1 = fields.slice(0,24)
-            const group2 = fields.slice(25,49)
-            NFTS.addFields(group1)
-            NFTS2.addFields(group2)
-            return interaction.editReply({ embeds: [NFTS, NFTS2], ephemeral: false })
-        }
-        if(size > 50 && size <= 75) {
-            const group1 = fields.slice(0,24)
-            const group2 = fields.slice(25,49)
-            const group3 = fields.slice(50,74)
-            NFTS.addFields(group1)
-            NFTS2.addFields(group2)
-            NFTS3.addFields(group3)
-            return interaction.editReply({ embeds: [NFTS, NFTS2, NFTS3], ephemeral: false })
-        }
-        if(size > 75 && size <= 100) {
-            const group1 = fields.slice(0,24)
-            const group2 = fields.slice(25,49)
-            const group3 = fields.slice(50,74)
-            const group4 = fields.slice(75,99)
-            NFTS.addFields(group1)
-            NFTS2.addFields(group2)
-            NFTS3.addFields(group3)
-            NFTS4.addFields(group4)
-            return interaction.editReply({ embeds: [NFTS, NFTS2, NFTS3, NFTS4], ephemeral: false })
-        } else if( size > 100){
-            return interaction.editReply({ content: "I'm sorry but this user has too many rugs for me to show. More than 100 different colletions, NGMI.", ephemeral: true })
-        }        
+        const nftArrayUri = []
+        await Promise.all(nftArray.map(async (nft) => {
+          if (!nft.data.uri || !nft.data.uri.startsWith('http')) return
+          try {
+            const response = await fetch(nft.data.uri);
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            
+            const nftUri = await response.json();
+
+            const name = nftUri?.name
+            const img = nftUri?.image
+            const descrip = nftUri?.description
+
+            const NFTS = new EmbedBuilder()
+            .setColor(0xBFF5A1)
+            .setTitle(`⸺ ${name}`)
+            .setDescription(descrip)
+            .setImage(img)
+
+            nftArrayUri.push(NFTS);
+          } catch (error) {
+            
+          }
+        }))
+
+        const extraText = `Gallery view`
+        new Pagination()
+          .setCommand(interaction)
+          .setPages(nftArrayUri)
+          .setButtons(buttons)
+          .setPaginationCollector({ timeout: 120_000 })
+          .setSelectMenu({ enable: false })
+          .setFooter({ enableIconUrl: false, extraText: extraText })
+          .send();
       })
     },
 };
