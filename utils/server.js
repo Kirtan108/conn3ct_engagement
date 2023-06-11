@@ -45,4 +45,16 @@ const getReply = async (replyURL, mainURL) => {
     }
 }
 
-module.exports = { getTweetMetrics, TweetVerification, getSeedURL, getReply }
+const getProfile = async (tweetHandle) => {
+    try {
+        const response = await fetch(`${baseURL}/profile?url=https://twitter.com/${tweetHandle}`, {
+            method: 'GET',
+        })
+        const data = await response.json()
+        return data
+    } catch (error) {
+        return console.log(error)
+    }
+}
+
+module.exports = { getTweetMetrics, TweetVerification, getSeedURL, getReply, getProfile }
