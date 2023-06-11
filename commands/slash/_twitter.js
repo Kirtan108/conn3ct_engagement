@@ -60,7 +60,7 @@ module.exports = {
         const d = await userInfo(user)
         if (d === undefined || d.error !== null) return interaction.editReply({ content: "User not connected to the App", ephemeral: true })
         if (d.user.twitter === null) return interaction.editReply({ content: "User not connected to the App", ephemeral: true })
-        if (d.user.twitter.refresh_token === null) return interaction.editReply({ content: "User needs to reconnect Twitter to the App", ephemeral: true })
+        //if (d.user.twitter.refresh_token === null) return interaction.editReply({ content: "User needs to reconnect Twitter to the App", ephemeral: true })
         const twitterHandle = await d.user.twitter.username
 
         const i = await getProfile(twitterHandle)
