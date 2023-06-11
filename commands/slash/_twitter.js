@@ -84,8 +84,8 @@ module.exports = {
             .setThumbnail(pfp)
             .setDescription(description + `\n\n${location}\n🗓️ ${created}\n\nProfile Link: [twitter.com/${twitterHandle} <:Link:1066039754749128714>](${profileLink})`)
             .addFields(
-                { name: 'Following', value: `**${format(following)}**`, inline: true },
-                { name: 'Followers', value: `**${format(followers)}**`, inline: true },
+                { name: 'Following', value: `**${following}**`, inline: true },
+                { name: 'Followers', value: `**${followers}**`, inline: true },
             )
             .setFooter({ text: "Connect - Powered by Mindfolk", iconURL: `${logoApp}` })
 
