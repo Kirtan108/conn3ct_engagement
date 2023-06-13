@@ -52,7 +52,7 @@ module.exports = {
         .setDescription('The duration of the raffle.')
         .setRequired(true)
         .addChoices(
-          { name: 'Test End - 15s', value: `${15}` },
+          // { name: 'Test End - 15s', value: `${15}` },
           { name: '24h', value: `${60 * 60 * 24}` },
           { name: '48h', value: `${60 * 60 * 48}` },
           { name: '3 Days', value: `${60 * 60 * 24 * 3}` },
