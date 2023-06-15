@@ -75,7 +75,7 @@ module.exports = {
           { name: "Available time", value: `<t:${date}:R>`, inline: true}
       )
       const tweetPic = img === null ? undefined : raidEmbed.setImage(img.url)
-      if(tweetPic === undefined) return interaction.editReply({ content: "Image couldn't be loaded! Please reach Kirtan.", ephemeral: true })
+      //if(tweetPic === undefined) return interaction.editReply({ content: "Image couldn't be loaded! Please reach Kirtan.", ephemeral: true })
      
       const buttonL = new ButtonBuilder()
 	    .setCustomId(`stepLike_${tweetLink}`)
