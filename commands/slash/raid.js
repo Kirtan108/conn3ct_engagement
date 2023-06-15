@@ -111,10 +111,6 @@ module.exports = {
       if(actions === 'like_retweet'){
         const row = new ActionRowBuilder().addComponents(buttonL, buttonR)
         return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
-        .then(message => {
-          const dM = () => message.delete()
-          accurateTimeout(dM, 1000 * time)
-        })
       }
       if(actions === 'like_comment'){
         const row = new ActionRowBuilder().addComponents(buttonL, buttonC)
@@ -129,35 +125,19 @@ module.exports = {
         const row = new ActionRowBuilder().addComponents(buttonR, buttonC)
         if(bonus !== 0) raidEmbed.addFields({ name: "Bonus reward for including in reply", value: `${bonus}`, inline: true})
         return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
-        .then(message => {
-          const dM = () => message.delete()
-          accurateTimeout(dM, 1000 * time)
-        })
       }
       if(actions === 'like'){
         const row = new ActionRowBuilder().addComponents(buttonL)
         return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
-        .then(message => {
-          const dM = () => message.delete()
-          accurateTimeout(dM, 1000 * time)
-        })
       }
       if(actions === 'retweet'){
         const row = new ActionRowBuilder().addComponents(buttonR)
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
-        .then(message => {
-          const dM = () => message.delete()
-          accurateTimeout(dM, 1000 * time)
-        })       
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })    
       }
       if(actions === 'comment'){
         const row = new ActionRowBuilder().addComponents(buttonC)
         if(bonus !== 0) raidEmbed.addFields({ name: "Bonus reward for including in reply", value: `${bonus}`, inline: true})
         return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
-        .then(message => {
-          const dM = () => message.delete()
-          accurateTimeout(dM, 1000 * time)
-        })
       }      
     },
 };
