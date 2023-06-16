@@ -3,7 +3,8 @@ const config = require("../../config")
 
 const token = config.token
 const color_void = config.colors.void
-const { tweetPik, accurateTimeout } = require("../../utils/functions")
+const { tweetPik } = require("../../utils/functions")
+const { getTweetEmbed } = require("../../utils/server")
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -54,7 +55,9 @@ module.exports = {
       const bonus = !interaction.options._hoistedOptions[5] ? 0 : interaction.options._hoistedOptions[5].value
       const tweet_id = tweetLink.toString().split("/").pop()
 
-      const img = await tweetPik(tweet_id)
+
+      const { embedDiscord } = await getTweetEmbed(tweetLink)
+      if (embedDiscord?.footer) embedDiscord.footer.icon_url = 'https://cdn.discordapp.com/attachments/1055246049104646235/1119063775400697887/Diseno_sin_titulo.png'
 
       const time = 60 * 60 * 12
       
@@ -74,8 +77,8 @@ module.exports = {
           { name: `**• Reward** ${token.emoji}`, value: `> **${reward}**`},
           { name: "Available time", value: `<t:${date}:R>`, inline: true}
       )
-      const tweetPic = img === null ? undefined : raidEmbed.setImage(img.url)
-      //if(tweetPic === undefined) return interaction.editReply({ content: "Image couldn't be loaded! Please reach Kirtan.", ephemeral: true })
+
+      if(!embedDiscord.description) return interaction.editReply({ content: "Tweet couldn't be loaded! Please reach Kirtan.", ephemeral: true })
      
       const buttonL = new ButtonBuilder()
 	    .setCustomId(`stepLike_${tweetLink}`)
@@ -98,7 +101,7 @@ module.exports = {
       if(actions === 'like_retweet_comment'){
         const row = new ActionRowBuilder().addComponents(buttonL, buttonR, buttonC)
         if(bonus !== 0) raidEmbed.addFields({ name: "Bonus reward for including in reply", value: `${bonus}`, inline: true})
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed, embedDiscord], components: [row] })
         // .then(msg => {
         //   msg.startThread({
         //     name: `Tweet Here!`,
@@ -110,12 +113,12 @@ module.exports = {
       }
       if(actions === 'like_retweet'){
         const row = new ActionRowBuilder().addComponents(buttonL, buttonR)
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed, embedDiscord], components: [row] })
       }
       if(actions === 'like_comment'){
         const row = new ActionRowBuilder().addComponents(buttonL, buttonC)
         if(bonus !== 0) raidEmbed.addFields({ name: "Bonus reward for including in reply", value: `${bonus}`, inline: true})
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed, embedDiscord], components: [row] })
         .then(message => {
           const dM = () => message.delete()
           accurateTimeout(dM, 1000 * time)
@@ -124,20 +127,20 @@ module.exports = {
       if(actions === 'retweet_comment'){
         const row = new ActionRowBuilder().addComponents(buttonR, buttonC)
         if(bonus !== 0) raidEmbed.addFields({ name: "Bonus reward for including in reply", value: `${bonus}`, inline: true})
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed, embedDiscord], components: [row] })
       }
       if(actions === 'like'){
         const row = new ActionRowBuilder().addComponents(buttonL)
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed, embedDiscord], components: [row] })
       }
       if(actions === 'retweet'){
         const row = new ActionRowBuilder().addComponents(buttonR)
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })    
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed, embedDiscord], components: [row] })    
       }
       if(actions === 'comment'){
         const row = new ActionRowBuilder().addComponents(buttonC)
         if(bonus !== 0) raidEmbed.addFields({ name: "Bonus reward for including in reply", value: `${bonus}`, inline: true})
-        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed], components: [row] })
+        return interaction.guild.channels.cache.get(`${channel}`).send({ content: `${mention.role}`, embeds: [raidEmbed, embedDiscord], components: [row] })
       }      
     },
 };

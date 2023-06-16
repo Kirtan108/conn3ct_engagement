@@ -57,4 +57,17 @@ const getProfile = async (tweetHandle) => {
     }
 }
 
-module.exports = { getTweetMetrics, TweetVerification, getSeedURL, getReply, getProfile }
+const getTweetEmbed = async (tweetURL) => {
+    try {
+        const response = await fetch(`${baseURL}/screenshot?url=${tweetURL}`, {
+            method: 'GET',
+        })
+        const data = await response.json()
+        return data
+    } catch (error) {
+        console.log(error)
+        return null
+    }
+}
+
+module.exports = { getTweetMetrics, TweetVerification, getSeedURL, getReply, getProfile, getTweetEmbed }
